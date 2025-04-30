@@ -18,7 +18,7 @@ const registerUser = asyncHandler( async (req, res) => {
     // return response 
 
     const { username, email, fullName, password } = req.body
-
+    //console.log(req.body)
     // if (fullName === "") {
     //     throw new ApiError(400, "fullname is required")
     // } can check one by one like this using multiple if statements below is a better version of this
@@ -28,7 +28,7 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(400, "All fields are required")
     }
 
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{ username },{ email }]
     })
     //what if username is taken but email is not then ?
@@ -38,14 +38,22 @@ const registerUser = asyncHandler( async (req, res) => {
     }
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+    //const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
+
+    //console.log(req.files)
 
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is required")
     }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const cooverImage = await uploadOnCloudinary(coverImageLocalPath)
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
     if(!avatar) {
         throw new ApiError(400, "Avatar file is required")
@@ -68,7 +76,7 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(500, "Something wnet wrong while registering the user")
     }
 
-    return res.ststus(201).json(
+    return res.status(201).json(
         new ApiResponse(200, createdUser, "User registered successfully")
     )
     
